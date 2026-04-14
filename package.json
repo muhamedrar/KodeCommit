@@ -8,6 +8,9 @@
     "type": "git",
     "url": "https://github.com/user/ollama-commit-generator"
   },
+  "scripts": {
+    "package-vsix": "yes | npx @vscode/vsce package --allow-star-activation"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },

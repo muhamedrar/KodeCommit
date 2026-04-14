@@ -1,0 +1,5 @@
+.vscode
+package-vsix.sh
+*.vsix
+node_modules
+.git

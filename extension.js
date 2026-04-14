@@ -298,15 +298,53 @@ async function getDiffText(repoPath) {
 }
 
 function buildCommitPrompt(diffText) {
-  return `You are a Git commit message assistant. Read the diff and write a clear, specific commit message.
-- Return only a title and, if needed, a short body separated by one blank line.
-- Do not include the word "Commit:" or any labels.
-- Use imperative present tense and keep the title under 72 characters.
-- Avoid vague phrasing such as "update", "fix stuff", "add changes".
-- Mention the key area changed and the main purpose of the change.
+  return `You are a Git commit message generator.
+- Produce a concise commit title in imperative tense, under 72 characters.
+- Optionally include one short body sentence separated by a single blank line.
+- Mention the key changed file(s) or folder, not function names or implementation details.
+- Do not use vague phrases like "update code", "improve quality", "fix stuff", or "add changes".
+- Do not include "Commit:", labels, markdown, explanations, or extra metadata.
 
 Diff:
 ${diffText}`;
+}
+
+function normalizeCommitMessage(commitMessage) {
+  if (!commitMessage || !commitMessage.trim()) {
+    return '';
+  }
+
+  const normalized = commitMessage.replace(/\r\n/g, '\n').trim();
+  const lines = normalized.split('\n').map(line => line.trimEnd());
+
+  // Remove leading labels like "Title:" or "Subject:" if the model includes them.
+  if (lines.length && /^(Title|Subject|Commit|Message)\s*[:\-]\s*/i.test(lines[0])) {
+    lines[0] = lines[0].replace(/^(Title|Subject|Commit|Message)\s*[:\-]\s*/i, '').trim();
+  }
+
+  // Trim extra blank lines at the start and end.
+  while (lines.length && lines[0] === '') {
+    lines.shift();
+  }
+  while (lines.length && lines[lines.length - 1] === '') {
+    lines.pop();
+  }
+
+  // Preserve the first paragraph and a body separated by a single blank line.
+  const cleaned = [];
+  let sawFirstBlank = false;
+  for (const line of lines) {
+    if (line === '') {
+      if (cleaned.length && !sawFirstBlank) {
+        cleaned.push('');
+        sawFirstBlank = true;
+      }
+      continue;
+    }
+    cleaned.push(line);
+  }
+
+  return cleaned.join('\n').trim();
 }
 
 async function fillGitCommitInputBox(commitMessage) {
@@ -452,14 +490,19 @@ async function generateCommitMessage(context) {
       return;
     }
 
-    const trimmedMessage = commitMessage.trim();
-    const inserted = await fillGitCommitInputBox(trimmedMessage);
+    const normalizedMessage = normalizeCommitMessage(commitMessage);
+    if (!normalizedMessage) {
+      vscode.window.showWarningMessage('Generated commit message could not be normalized.');
+      return;
+    }
+
+    const inserted = await fillGitCommitInputBox(normalizedMessage);
     if (inserted) {
       vscode.window.showInformationMessage('Commit message inserted into the Source Control input box.');
       return;
     }
 
-    const doc = await vscode.workspace.openTextDocument({ content: trimmedMessage, language: 'git-commit' });
+    const doc = await vscode.workspace.openTextDocument({ content: normalizedMessage, language: 'git-commit' });
     await vscode.window.showTextDocument(doc, { preview: false });
   } catch (error) {
     vscode.window.showErrorMessage(`Ollama generation failed: ${error.message}`);
