@@ -104,7 +104,7 @@ function requestJson(endpoint, method = 'GET', body = null, apiKey = '') {
         path: url.pathname + (url.search || ''),
         method,
         headers,
-        timeout: 20000
+        timeout: 120000
       },
       response => {
         let raw = '';
@@ -313,7 +313,16 @@ async function chooseModel(context) {
 
   let models;
   try {
-    models = await listOllamaModels();
+    models = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Initializing Ollama and loading models...',
+        cancellable: false
+      },
+      async () => {
+        return await listOllamaModels();
+      }
+    );
   } catch (error) {
     vscode.window.showErrorMessage(error.message);
     return;
