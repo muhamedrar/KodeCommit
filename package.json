@@ -28,8 +28,8 @@
         "title": "Generate Commit Message",
         "category": "Ollama Commit Generator",
         "icon": {
-          "light": "images/ollama.svg",
-          "dark": "images/ollama.svg"
+          "light": "images/lama.svg",
+          "dark": "images/lama.svg"
         }
       },
       {
