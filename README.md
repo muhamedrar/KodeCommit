@@ -2,6 +2,34 @@
 
 An example VS Code extension that adds a Source Control title action for generating commit messages with local Ollama models.
 
+## Installation
+
+### Installing Ollama via Docker
+
+1. Ensure Docker is installed on your system. If not, download and install Docker from [docker.com](https://www.docker.com/).
+
+2. Pull the Ollama Docker image:
+   ```bash
+   docker pull ollama/ollama
+   ```
+
+3. Run the Ollama container:
+   ```bash
+   docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+   ```
+
+4. Pull the Mistral model inside the container:
+   ```bash
+   docker exec -it ollama ollama pull mistral
+   ```
+
+### Configuring the Extension
+
+1. In VS Code, open the settings (Ctrl+,).
+2. Search for "Ollama Commit".
+3. Set `ollamaCommit.endpoint` to `http://localhost:11434` (the default Ollama endpoint).
+4. Optionally, set `ollamaCommit.ollamaPath` if using local CLI, but for Docker setup, the endpoint is sufficient.
+
 ## Features
 
 - Adds a button in the SCM title bar for generating commit messages.
