@@ -1,43 +1,52 @@
 # LlamaCommit
 
-LlamaCommit is a VS Code extension that generates Git commit messages directly from the Source Control view. It started as an Ollama-based workflow and now supports multiple providers through one clean configuration flow.
+LlamaCommit is a VS Code extension that generates Git commit messages directly from the Source Control view. It uses the OpenAI-compatible API format, which means it works with a wide range of providers — local or hosted.
 
 ## What it does
 
 - Adds a `Generate Commit Message` action to the SCM title bar.
 - Adds a gear button for provider setup without leaving Source Control.
-- Supports local Ollama, one OpenAI-API-style provider with a configurable base URL, and Cohere.
-- Stores provider API keys in VS Code Secret Storage.
-- Remembers model selection separately for each provider.
+- Supports any provider that exposes an OpenAI-compatible API.
+- Stores API keys in VS Code Secret Storage.
+- Remembers model selection between sessions.
 - Falls back to opening a `git-commit` document if the SCM input box cannot be filled automatically.
+
+## How it works
+
+LlamaCommit uses a single OpenAI-compatible provider. You configure the base URL and API key to point at whichever service you want to use. This keeps the extension simple and works with any provider that supports the OpenAI API format.
 
 ## Supported providers
 
-### 1. Ollama CLI
+Any provider that exposes an OpenAI-compatible API works with LlamaCommit. Below are common examples.
 
-Use this when Ollama is installed locally and available on your machine.
+### OpenAI
 
-- No API key required.
-- Lists local Ollama models from the installed `ollama` executable.
-- Optional custom executable path if `ollama` is not on `PATH`.
+- Base URL: `https://api.openai.com/v1`
+- Requires an OpenAI API key.
 
-### 2. OpenAI API
+### Ollama (local)
 
-Use this for any provider that supports the OpenAI API format.
+- Base URL: `http://localhost:11434/v1`
+- No API key required for local use.
+- Make sure Ollama is running and you have at least one model pulled.
 
-- Base URL is configurable from the gear menu.
-- Works with OpenAI when the base URL is `https://api.openai.com/v1`
-- Works with Ollama when the base URL is `http://localhost:11434/v1`
-- Optional API key for local Ollama, required when your endpoint needs authentication.
-- Dynamic model listing from the configured endpoint.
+### Cohere
 
-### 3. Cohere
-
-Use hosted Cohere chat models.
-
+- Base URL: `https://api.cohere.com/compatibility/v1`
 - Requires a Cohere API key.
-- Default base URL: `https://api.cohere.com`
-- Dynamic model listing for chat-capable Cohere models.
+
+### Kimi (Moonshot)
+
+- Base URL: `https://api.moonshot.cn/v1`
+- Requires a Moonshot API key.
+
+### Claude (Anthropic)
+
+- Base URL: `https://api.anthropic.com/v1`
+- Requires an Anthropic API key.
+- Note: Anthropic's OpenAI compatibility layer may require setting the model manually.
+
+> Any other provider with an OpenAI-compatible endpoint works the same way — just set the base URL and API key accordingly.
 
 ## Source Control actions
 
@@ -46,24 +55,22 @@ The extension adds two buttons to the Source Control title bar:
 - `Generate Commit Message`: runs the active provider against the current Git diff.
 - `AI Settings`: opens the persistent provider settings menu.
 
-The settings menu now stays open until you explicitly close it or dismiss it with `Esc`, so you can change provider, API key, base URL, and model in one session.
+The settings menu stays open until you explicitly close it or dismiss it with `Esc`, so you can change the API key, base URL, and model in one session.
 
 ## Settings menu actions
 
-Depending on the active provider, the gear menu lets you:
+The gear menu lets you:
 
-- Switch the active provider
 - Choose a model from the provider
 - Enter a model manually
 - Edit the commit instructions template
-- Set or clear the provider API key
-- Set the provider base URL
-- Set the Ollama executable path
+- Set or clear the API key
+- Set the base URL
 - Close the menu when you are done
 
 ## Prompt template customization
 
-The commit-generation instructions are now stored in:
+The commit-generation instructions are stored in:
 
 - [`templates/commit-template.txt`](templates/commit-template.txt)
 
@@ -82,7 +89,7 @@ The file uses two sections:
 [/USER]
 ```
 
-`{{diff}}` is replaced with the current Git diff before the request is sent to the selected provider.
+`{{diff}}` is replaced with the current Git diff before the request is sent to the provider.
 
 If the template file is missing or malformed, the extension falls back to a built-in default template.
 
@@ -92,35 +99,35 @@ If the template file is missing or malformed, the extension falls back to a buil
 
 1. Clone or open this project in VS Code.
 2. Package it as a VSIX if needed:
-   ```bash
+```bash
    npm run package-vsix
-   ```
+```
 3. Install the VSIX in VS Code, or run the extension in Extension Development Host mode.
 
 ### Optional: run Ollama with Docker
 
 1. Ensure Docker is installed.
 2. Pull the image:
-   ```bash
+```bash
    docker pull ollama/ollama
-   ```
+```
 3. Start the container:
-   ```bash
+```bash
    docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
-   ```
+```
 4. Pull a model inside the container:
-   ```bash
+```bash
    docker exec -it ollama ollama pull mistral
-   ```
-5. In LlamaCommit, choose `OpenAI API` and keep the base URL as `http://localhost:11434/v1`.
+```
+5. In LlamaCommit, set the base URL to `http://localhost:11434/v1`.
 
 ## Quick start
 
 1. Open a Git repository in VS Code.
 2. Open the Source Control view.
 3. Click the gear button.
-4. Select the provider you want to use.
-5. Add the API key if that provider needs one.
+4. Set the base URL for your provider.
+5. Add the API key if required.
 6. Choose a model or enter one manually.
 7. Close the settings menu.
 8. Click `Generate Commit Message`.
@@ -130,8 +137,8 @@ If the template file is missing or malformed, the extension falls back to a buil
 1. The extension detects the current Git repository.
 2. It reads the staged diff first.
 3. If there is no staged diff, it reads the unstaged diff.
-4. It builds the provider request from the prompt template.
-5. It asks the active provider for a single-line commit message.
+4. It builds the request from the prompt template.
+5. It asks the provider for a single-line commit message.
 6. It normalizes the returned text.
 7. It writes the message into the SCM commit input box when possible.
 8. If that fails, it opens a `git-commit` document with the generated message.
@@ -139,32 +146,18 @@ If the template file is missing or malformed, the extension falls back to a buil
 ## Requirements
 
 - A Git repository must be open in the current workspace.
-- For `Ollama CLI`, `ollama` must be installed locally, unless you set a custom executable path.
-- For `OpenAI API`, the configured endpoint must expose OpenAI-compatible routes.
-- For the official OpenAI service, use base URL `https://api.openai.com/v1` and provide a valid OpenAI API key.
-- For `Cohere`, a valid Cohere API key is required.
+- The configured endpoint must expose OpenAI-compatible routes.
+- An API key is required for most hosted providers.
 
 ## Architecture
 
-The codebase is split so adding providers later stays straightforward:
+The codebase is structured to stay easy to maintain and extend:
 
-- Provider registry in `src/providers`
+- Provider logic in `src/providers`
 - Provider state and secret helpers in `src/state.js`
 - Command/UI flow in `src/commands.js`
 - Prompt loading and commit normalization in `src/commit.js`
 - Editable prompt template in `templates/commit-template.txt`
-
-To add a new provider later, you mainly add a new provider module and register it in `src/providers/index.js`.
-
-## Migration and compatibility
-
-Older settings are still read as fallbacks for migration:
-
-- `ollamaCommit.endpoint`
-- `ollamaCommit.apiKey`
-- `ollamaCommit.ollamaPath`
-
-New API keys are stored in VS Code Secret Storage instead of plain settings.
 
 ## Troubleshooting
 
@@ -172,8 +165,7 @@ New API keys are stored in VS Code Secret Storage instead of plain settings.
 
 - Confirm the provider is reachable.
 - Confirm the API key is set when required.
-- For Ollama CLI, confirm `ollama` runs in your terminal.
-- Use manual model entry if the provider does not return a model list you want.
+- Use manual model entry if the provider does not return a model list.
 
 ### The commit message is not inserted into SCM
 
