@@ -50,6 +50,34 @@ function getProviderSummary(provider, config, status) {
   return details.join(' | ') || provider.description;
 }
 
+function normalizeModelOption(model) {
+  if (typeof model === 'string') {
+    const value = model.trim();
+    return value
+      ? {
+          label: value,
+          value
+        }
+      : null;
+  }
+
+  if (!model || typeof model !== 'object') {
+    return null;
+  }
+
+  const value = String(model.value || model.model || model.id || model.name || model.label || '').trim();
+  if (!value) {
+    return null;
+  }
+
+  return {
+    label: String(model.label || value).trim() || value,
+    description: typeof model.description === 'string' ? model.description : '',
+    detail: typeof model.detail === 'string' ? model.detail : '',
+    value
+  };
+}
+
 async function promptForModelInput(context, providerId) {
   const provider = getProviderOrThrow(providerId);
   const config = getStoredProviderConfig(context, providerId);
@@ -105,14 +133,19 @@ async function chooseModel(context, providerId = getActiveProviderId(context)) {
         description: 'Type any model name yourself.',
         model: '__manual__'
       },
-      ...models.map(model => ({
-        label: model,
-        description: model === currentModel ? 'Current model' : '',
-        model
-      }))
+      ...models
+        .map(normalizeModelOption)
+        .filter(Boolean)
+        .map(model => ({
+          label: model.label,
+          description:
+            [model.description, model.value === currentModel ? 'Current model' : ''].filter(Boolean).join(' • '),
+          detail: model.detail || '',
+          model: model.value
+        }))
     ],
     {
-      placeHolder: `Select a model for ${provider.label}`,
+      placeHolder: `Select a generation model for ${provider.label}`,
       canPickMany: false
     }
   );

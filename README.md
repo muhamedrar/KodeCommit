@@ -26,6 +26,7 @@ The current build ships with an OpenAI provider, plus a configurable base URL so
 - Stores API keys in VS Code Secret Storage
 - Supports `OPENAI_API_KEY` as a fallback source for the API key
 - Lets you choose a model from the provider's model list
+- Filters the model picker to generation-capable models when the endpoint exposes enough metadata
 - Lets you enter a model manually if model listing is unavailable
 - Lets you change the base URL from the settings menu
 - Keeps a provider switcher in place for future expansion
@@ -247,6 +248,7 @@ If you run into a bug or have an idea for the project, open an issue and include
 - Check that the base URL is correct.
 - Check that the API key is valid.
 - Some endpoints do not expose model lists in the same format.
+- Some endpoints return mostly embedding or non-generation models, which are now hidden from the picker.
 - Use `Enter model manually` if needed.
 
 ### The commit message was not inserted into Source Control
