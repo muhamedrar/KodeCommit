@@ -1,7 +1,7 @@
 # KodeCommit
 
 <p align="center">
-  <img alt="Version 1.0.0" src="https://img.shields.io/badge/Version-1.0.0-orange" />
+  <img alt="Version 1.1.0" src="https://img.shields.io/badge/Version-1.0.0-orange" />
   <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green.svg" />
   <img alt="Built for VS Code" src="https://img.shields.io/badge/Built%20for-VS%20Code-007ACC" />
   <img alt="OpenAI Compatible" src="https://img.shields.io/badge/API-OpenAI%20Compatible-black" />
